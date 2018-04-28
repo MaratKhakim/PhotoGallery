@@ -27,7 +27,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class PhotoGalleryFragment extends Fragment {
 
@@ -37,14 +36,14 @@ public class PhotoGalleryFragment extends Fragment {
 
     private RecyclerView mPhotoRecyclerView;
     private GalleryAdapter mAdapter;
-    private List<GalleryItem> items = new ArrayList<>();
+    private ArrayList<GalleryItem> mItems = new ArrayList<>();
     private ProgressDialog pDialog;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         pDialog = new ProgressDialog(getActivity());
-        mAdapter = new GalleryAdapter(getActivity(), items);
+        mAdapter = new GalleryAdapter(getActivity(), mItems);
     }
 
     @Nullable
@@ -58,6 +57,7 @@ public class PhotoGalleryFragment extends Fragment {
         mPhotoRecyclerView.setItemAnimator(new DefaultItemAnimator());
         setupAdapter();
         fetchImages();
+
         return view;
     }
 
@@ -80,7 +80,7 @@ public class PhotoGalleryFragment extends Fragment {
                 Log.d(TAG, response.toString());
                 pDialog.hide();
 
-                items.clear();
+                mItems.clear();
 
                 try {
                     JSONObject photosJsonObject = response.getJSONObject("photos");
@@ -91,14 +91,14 @@ public class PhotoGalleryFragment extends Fragment {
 
                         GalleryItem item = new GalleryItem();
                         item.setId(photoJsonObject.getString("id"));
-                        item.setCaption(photoJsonObject.getString("title"));
+                        item.setTitle(photoJsonObject.getString("title"));
 
                         if (!photoJsonObject.has("url_s")){
                             continue;
                         }
 
                         item.setUrl(photoJsonObject.getString("url_s"));
-                        items.add(item);
+                        mItems.add(item);
                     }
                 } catch (JSONException e) {
                     Log.e(TAG, "Json parsing error: " + e.getMessage());

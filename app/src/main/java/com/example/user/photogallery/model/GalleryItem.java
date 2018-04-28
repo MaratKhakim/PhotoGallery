@@ -1,17 +1,19 @@
 package com.example.user.photogallery.model;
 
 
-public class GalleryItem {
-    private String mCaption;
+import java.io.Serializable;
+
+public class GalleryItem implements Serializable {
+    private String mTitle;
     private String mId;
     private String mUrl;
 
-    public String getCaption() {
-        return mCaption;
+    public String getTitle() {
+        return mTitle;
     }
 
-    public void setCaption(String mCaption) {
-        this.mCaption = mCaption;
+    public void setTitle(String title) {
+        this.mTitle = title;
     }
 
     public String getId() {
@@ -32,6 +34,6 @@ public class GalleryItem {
 
     @Override
     public String toString() {
-        return mCaption;
+        return mTitle;
     }
 }
