@@ -1,21 +1,29 @@
 package com.example.user.photogallery.activity;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.example.user.photogallery.R;
 import com.example.user.photogallery.fragment.PhotoGalleryFragment;
 import com.example.user.photogallery.fragment.SavedPhotosFragment;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final static String TAG = "MainActivity";
+    private static final int REQUEST_CODE_EXTERNAL_STORAGE_PERMISSION = 123;
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -39,6 +47,15 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        if (!isPermissionGranted())
+            return;
+
+        setupUI();
+
+    }
+
+    private void setupUI() {
         // Create the adapter that will return a fragment for each of the two
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -51,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
 
         mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
-
     }
 
     @Override
@@ -89,13 +105,10 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-            switch (position){
-                case 0:
-                    return new PhotoGalleryFragment();
-                default:
-                    return new SavedPhotosFragment();
-            }
+            if (position == 1)
+                return new SavedPhotosFragment();
+
+            return new PhotoGalleryFragment();
         }
 
         @Override
@@ -104,4 +117,38 @@ public class MainActivity extends AppCompatActivity {
             return 2;
         }
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_CODE_EXTERNAL_STORAGE_PERMISSION) {
+            int grantResultsLength = grantResults.length;
+            if (grantResultsLength > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                setupUI();
+            } else {
+                Toast.makeText(getApplicationContext(), "Permission is required", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private boolean isPermissionGranted() {
+        /*if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M)
+            return true;*/
+
+        // Check whether this app has write external storage permission or not.
+        int writeExternalStoragePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int readExternalStoragePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+        // If do not grant write external storage permission.
+        if (writeExternalStoragePermission != PackageManager.PERMISSION_GRANTED && readExternalStoragePermission != PackageManager.PERMISSION_GRANTED) {
+            // Request user to grant write external storage permission.
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_CODE_EXTERNAL_STORAGE_PERMISSION);
+
+            return false;
+        }
+
+        return true;
+    }
+
 }

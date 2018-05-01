@@ -8,4 +8,9 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_slide_show">SlideShowActivity</string>
+
+    <string name="save">Save</string>
+    <string name="saved">Saved to</string>
+    <string name="permissions_required">Permission is required</string>
+    <string name="share_begin">Want to share</string>
 </resources>
