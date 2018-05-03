@@ -13,4 +13,6 @@
     <string name="saved">Saved to</string>
     <string name="permissions_required">Permission is required</string>
     <string name="share_begin">Want to share</string>
+    <string name="folder_name">PhotoGalleryApp</string>
+    <string name="label_count">%d of %d</string>
 </resources>

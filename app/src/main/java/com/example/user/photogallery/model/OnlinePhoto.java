@@ -1,12 +1,12 @@
 package com.example.user.photogallery.model;
 
-
 import java.io.Serializable;
 
-public class GalleryItem implements Serializable {
+public class OnlinePhoto implements Serializable {
     private String mTitle;
     private String mId;
     private String mUrl;
+
 
     public String getTitle() {
         return mTitle;
@@ -36,4 +36,6 @@ public class GalleryItem implements Serializable {
     public String toString() {
         return mTitle;
     }
+
+
 }

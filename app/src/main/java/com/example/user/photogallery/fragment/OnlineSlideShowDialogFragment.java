@@ -1,4 +1,4 @@
-package com.example.user.photogallery.activity;
+package com.example.user.photogallery.fragment;
 
 import android.content.Context;
 import android.content.Intent;
@@ -6,10 +6,11 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,10 +22,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.RequestOptions;
 import com.example.user.photogallery.R;
-import com.example.user.photogallery.model.GalleryItem;
+import com.example.user.photogallery.model.OnlinePhoto;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,35 +32,41 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
-public class SlideShowActivity extends AppCompatActivity {
+public class OnlineSlideShowDialogFragment extends DialogFragment {
 
-    private static final String TAG = "SlideShowActivity";
-    private final static String VAR_BUNDLE = "VarBundle";
+    private static final String TAG = "OnlineSlideShow";
 
-    private ArrayList<GalleryItem> images;
+    private ArrayList<OnlinePhoto> images;
 
-    public static Intent newIntent(Context context, Bundle bundle) {
-        Intent intent = new Intent(context, SlideShowActivity.class);
-        intent.putExtra(VAR_BUNDLE, bundle);
-        return intent;
+    public static OnlineSlideShowDialogFragment newInstance() {
+        OnlineSlideShowDialogFragment fragment = new OnlineSlideShowDialogFragment();
+        return fragment;
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_slide_show);
+        setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+    }
 
-        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+    @NonNull
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_slide_show, container, false);
 
-        Bundle bundle = getIntent().getBundleExtra(VAR_BUNDLE);
+        ViewPager viewPager = (ViewPager) view.findViewById(R.id.viewpager);
 
-        images = (ArrayList<GalleryItem>) bundle.getSerializable("images");
+        Bundle bundle = getArguments();
+
+        images = (ArrayList<OnlinePhoto>) bundle.getSerializable("images");
         int selectedPosition = bundle.getInt("position", 0);
 
         MyViewPagerAdapter myViewPagerAdapter = new MyViewPagerAdapter();
         viewPager.setAdapter(myViewPagerAdapter);
 
         viewPager.setCurrentItem(selectedPosition, false);
+
+        return view;
     }
 
     //  adapter
@@ -77,7 +82,7 @@ public class SlideShowActivity extends AppCompatActivity {
 
             final int finalPosition = position;
 
-            layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            layoutInflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View view = layoutInflater.inflate(R.layout.photo_fullscreen, container, false);
 
             final ImageView imageViewPreview = (ImageView) view.findViewById(R.id.image_preview);
@@ -97,16 +102,14 @@ public class SlideShowActivity extends AppCompatActivity {
                 }
             });
 
-            GalleryItem image = images.get(position);
+            OnlinePhoto image = images.get(position);
 
-            Log.e(TAG, "ID : " + image.getId());
+            /*RequestOptions requestOptions = new RequestOptions();
+            requestOptions.diskCacheStrategy(DiskCacheStrategy.ALL);*/
 
-            RequestOptions requestOptions = new RequestOptions();
-            requestOptions.diskCacheStrategy(DiskCacheStrategy.ALL);
-
-            Glide.with(SlideShowActivity.this).load(image.getUrl())
+            Glide.with(OnlineSlideShowDialogFragment.this).load(image.getUrl())
                     .thumbnail(0.5f)
-                    .apply(requestOptions)
+                    //.apply(requestOptions)
                     .into(imageViewPreview);
 
             btnShare.setOnClickListener(new View.OnClickListener() {
@@ -119,20 +122,23 @@ public class SlideShowActivity extends AppCompatActivity {
                     shareIntent.setType("text/plain");
                     shareIntent.setAction(Intent.ACTION_SEND);
                     shareIntent.putExtra(Intent.EXTRA_TEXT, appvalue + " " + applicationName + ": " + images.get(finalPosition).getUrl());
-                    SlideShowActivity.this.startActivity(Intent.createChooser(shareIntent, "Share"));
+                    OnlineSlideShowDialogFragment.this.startActivity(Intent.createChooser(shareIntent, "Share"));
                 }
             });
 
-            labelCount.setText((position + 1) + " of " + images.size());
+            String labelText = String.format(getResources().getString(R.string.label_count), position+1, images.size());
+            labelCount.setText(labelText);
 
             btnSave.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     String path = Environment.getExternalStorageDirectory().toString();
                     OutputStream fOut = null;
-                    File dir = new File(path + "/PhotoGalleryApp/");
+                    File dir = new File(path + "/"+getResources().getString(R.string.folder_name)+"/");
                     if (!dir.exists())
                         dir.mkdir();
+
+                    Log.e(TAG, dir.toString());
 
                     File file = new File(dir, "photo_gallery_" + images.get(position).getId() + ".jpg");
                     try {
@@ -142,10 +148,10 @@ public class SlideShowActivity extends AppCompatActivity {
                         fOut.flush();
                         fOut.close();
 
-                        MediaStore.Images.Media.insertImage(getContentResolver(), file.getAbsolutePath(), file.getName(), file.getName());
+                        //MediaStore.Images.Media.insertImage(getActivity().getContentResolver(), file.getAbsolutePath(), file.getName(), file.getName());
 
                         String saved = getResources().getString(R.string.saved);
-                        Toast.makeText(SlideShowActivity.this, saved + " " + file.toString(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getActivity(), saved + " " + file.toString(), Toast.LENGTH_LONG).show();
                         Log.d(TAG, "Saved");
                     } catch (FileNotFoundException e) {
                         Log.e(TAG, "File not found " + e.getMessage());

@@ -17,13 +17,13 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.user.photogallery.R;
-import com.example.user.photogallery.fragment.PhotoGalleryFragment;
+import com.example.user.photogallery.fragment.OnlinePhotosFragment;
 import com.example.user.photogallery.fragment.SavedPhotosFragment;
 
 public class MainActivity extends AppCompatActivity {
 
     private final static String TAG = "MainActivity";
-    private static final int REQUEST_CODE_EXTERNAL_STORAGE_PERMISSION = 123;
+    private static final int REQUEST_CODE_EXTERNAL_STORAGE_PERMISSION = 100;
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
             if (position == 1)
                 return new SavedPhotosFragment();
 
-            return new PhotoGalleryFragment();
+            return new OnlinePhotosFragment();
         }
 
         @Override

@@ -18,9 +18,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.example.user.photogallery.R;
-import com.example.user.photogallery.adapter.GalleryAdapter;
+import com.example.user.photogallery.adapter.OnlineAdapter;
 import com.example.user.photogallery.helper.SingletonRequestQueue;
-import com.example.user.photogallery.model.GalleryItem;
+import com.example.user.photogallery.model.OnlinePhoto;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,33 +28,27 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class PhotoGalleryFragment extends Fragment {
+public class OnlinePhotosFragment extends Fragment {
 
     //replace api_key with your key
     private static final String API_KEY = "api_key";
-    private static final String TAG = "PhotoGalleryFragment";
+    private static final String TAG = "OnlinePhotosFragment";
 
     private RecyclerView mPhotoRecyclerView;
-    private GalleryAdapter mAdapter;
-    private ArrayList<GalleryItem> mItems = new ArrayList<>();
+    private OnlineAdapter mAdapter;
+    private ArrayList<OnlinePhoto> mItems = new ArrayList<>();
     private ProgressDialog pDialog;
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        pDialog = new ProgressDialog(getActivity());
-        mAdapter = new GalleryAdapter(getActivity(), mItems);
-    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
+        pDialog = new ProgressDialog(getActivity());
         mPhotoRecyclerView = view.findViewById(R.id.recycler_view);
-
         RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getActivity(), 2);
         mPhotoRecyclerView.setLayoutManager(mLayoutManager);
         mPhotoRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        mAdapter = new OnlineAdapter(getActivity(), mItems);
         setupAdapter();
         fetchImages();
 
@@ -89,7 +83,7 @@ public class PhotoGalleryFragment extends Fragment {
                     for (int i = 0; i < photoJsonArray.length(); i++){
                         JSONObject photoJsonObject = photoJsonArray.getJSONObject(i);
 
-                        GalleryItem item = new GalleryItem();
+                        OnlinePhoto item = new OnlinePhoto();
                         item.setId(photoJsonObject.getString("id"));
                         item.setTitle(photoJsonObject.getString("title"));
 

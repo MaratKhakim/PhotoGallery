@@ -4,7 +4,6 @@ package com.example.user.photogallery.fragment;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
@@ -15,7 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.user.photogallery.R;
-import com.example.user.photogallery.adapter.SavedPhotosAdapter;
+import com.example.user.photogallery.adapter.SavedAdapter;
 import com.example.user.photogallery.model.SavedPhoto;
 
 import java.io.File;
@@ -29,14 +28,7 @@ public class SavedPhotosFragment extends Fragment {
     private static final String TAG = "SavedPhotosFragment";
 
     private RecyclerView mPhotoRecyclerView;
-    public SavedPhotosAdapter mAdapter;
-    private ArrayList<SavedPhoto> mItems = new ArrayList<>();
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate");
-    }
+    public SavedAdapter mAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -48,8 +40,8 @@ public class SavedPhotosFragment extends Fragment {
         RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getActivity(), 2);
         mPhotoRecyclerView.setLayoutManager(mLayoutManager);
         mPhotoRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        mItems = getSavedPhotos();
-        mAdapter = new SavedPhotosAdapter(getActivity(), mItems);
+        ArrayList<SavedPhoto> items = getSavedPhotos();
+        mAdapter = new SavedAdapter(getActivity(), items);
         setupAdapter();
         Log.d(TAG, "onCreateView");
         return view;
@@ -62,10 +54,9 @@ public class SavedPhotosFragment extends Fragment {
     }
 
     private ArrayList<SavedPhoto> getSavedPhotos(){
-        Log.d(TAG, "getSavedPhotos");
         ArrayList<SavedPhoto> savedPhotos = new ArrayList<>();
 
-        File folder= new File(Environment.getExternalStorageDirectory(), "PhotoGalleryApp");
+        File folder= new File(Environment.getExternalStorageDirectory(), getResources().getString(R.string.folder_name));
         SavedPhoto photo;
 
         if (folder.exists()){

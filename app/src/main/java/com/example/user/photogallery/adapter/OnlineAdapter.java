@@ -1,8 +1,8 @@
 package com.example.user.photogallery.adapter;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,18 +10,16 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.RequestOptions;
 import com.example.user.photogallery.R;
 import com.example.user.photogallery.activity.MainActivity;
-import com.example.user.photogallery.activity.SlideShowActivity;
-import com.example.user.photogallery.model.GalleryItem;
+import com.example.user.photogallery.fragment.OnlineSlideShowDialogFragment;
+import com.example.user.photogallery.model.OnlinePhoto;
 
 import java.util.ArrayList;
 
-public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.PhotoHolder> {
+public class OnlineAdapter extends RecyclerView.Adapter<OnlineAdapter.PhotoHolder> {
 
-    private ArrayList<GalleryItem> mItems;
+    private ArrayList<OnlinePhoto> mItems;
     private Context mContext;
 
     public class PhotoHolder extends RecyclerView.ViewHolder {
@@ -34,7 +32,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.PhotoHol
     }
 
 
-    public GalleryAdapter(Context context, ArrayList<GalleryItem> images) {
+    public OnlineAdapter(Context context, ArrayList<OnlinePhoto> images) {
         mContext = context;
         this.mItems = images;
     }
@@ -52,8 +50,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.PhotoHol
                 bundle.putSerializable("images", mItems);
                 bundle.putInt("position", photoHolder.getAdapterPosition());
 
-                Intent intent = SlideShowActivity.newIntent(mContext, bundle);
-                mContext.startActivity(intent);
+                FragmentTransaction fragmentTransaction = ((MainActivity) mContext).getSupportFragmentManager().beginTransaction();
+                OnlineSlideShowDialogFragment fragment = OnlineSlideShowDialogFragment.newInstance();
+                fragment.setArguments(bundle);
+                fragment.show(fragmentTransaction, "slideShow");
             }
         });
 
@@ -62,14 +62,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.PhotoHol
 
     @Override
     public void onBindViewHolder(PhotoHolder holder, int position) {
-        GalleryItem image = mItems.get(position);
+        OnlinePhoto image = mItems.get(position);
 
-        RequestOptions requestOptions = new RequestOptions();
-        requestOptions.diskCacheStrategy(DiskCacheStrategy.ALL);
+        /*RequestOptions requestOptions = new RequestOptions();
+        requestOptions.diskCacheStrategy(DiskCacheStrategy.ALL);*/
 
         Glide.with(mContext).load(image.getUrl())
                 .thumbnail(0.5f)
-                .apply(requestOptions)
+                //.apply(requestOptions)
                 .into(holder.thumbnail);
     }
 
