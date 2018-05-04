@@ -3,6 +3,7 @@ package com.example.user.photogallery.activity;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -14,15 +15,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.user.photogallery.R;
 import com.example.user.photogallery.fragment.OnlinePhotosFragment;
 import com.example.user.photogallery.fragment.SavedPhotosFragment;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.HashMap;
+import java.util.Map;
 
-    private final static String TAG = "MainActivity";
+public class MainActivity extends AppCompatActivity implements ViewPager.OnPageChangeListener {
+
     private static final int REQUEST_CODE_EXTERNAL_STORAGE_PERMISSION = 100;
 
     /**
@@ -34,11 +38,6 @@ public class MainActivity extends AppCompatActivity {
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
     private SectionsPagerAdapter mSectionsPagerAdapter;
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
-    private ViewPager mViewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,14 +59,16 @@ public class MainActivity extends AppCompatActivity {
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
+        ViewPager viewPager = (ViewPager) findViewById(R.id.container);
+        viewPager.setAdapter(mSectionsPagerAdapter);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
 
-        mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
+        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        viewPager.addOnPageChangeListener(this);
+        tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(viewPager));
+
+
     }
 
     @Override
@@ -92,14 +93,38 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+
+        Fragment fragment = mSectionsPagerAdapter.getFragment(position);
+        if (position == 1 && fragment != null) {
+            fragment.onResume();
+        }
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
+    }
+
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
+        private Map<Integer, String> mFragmentTags;
+        private FragmentManager mFragmentManager;
+
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
+            mFragmentManager = fm;
+            mFragmentTags = new HashMap<>();
         }
 
         @Override
@@ -111,9 +136,28 @@ public class MainActivity extends AppCompatActivity {
             return new OnlinePhotosFragment();
         }
 
+        @NonNull
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            Object obj = super.instantiateItem(container, position);
+            if (obj instanceof Fragment) {
+                Fragment fragment = (Fragment) obj;
+                String tag = fragment.getTag();
+                mFragmentTags.put(position, tag);
+            }
+
+            return obj;
+        }
+
+        public Fragment getFragment(int position) {
+            String tag = mFragmentTags.get(position);
+            if (tag == null)
+                return null;
+            return mFragmentManager.findFragmentByTag(tag);
+        }
+
         @Override
         public int getCount() {
-            // Show 2 total pages.
             return 2;
         }
     }
@@ -128,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
             if (grantResultsLength > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 setupUI();
             } else {
-                Toast.makeText(getApplicationContext(), "Permission is required", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), getResources().getString(R.string.permission_requirement), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -137,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
         /*if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M)
             return true;*/
 
-        // Check whether this app has write external storage permission or not.
+        // Check whether this app has write and read external storage permission or not.
         int writeExternalStoragePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int readExternalStoragePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
         // If do not grant write external storage permission.

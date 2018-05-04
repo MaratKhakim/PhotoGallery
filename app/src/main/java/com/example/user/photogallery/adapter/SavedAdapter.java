@@ -72,4 +72,10 @@ public class SavedAdapter extends RecyclerView.Adapter<SavedAdapter.SavedPhotoHo
             mImageView = itemView.findViewById(R.id.thumbnail);
         }
     }
+
+    public void refreshPhotos(ArrayList<SavedPhoto> list){
+        mSavedPhotos.clear();
+        mSavedPhotos.addAll(list);
+        notifyDataSetChanged();
+    }
 }

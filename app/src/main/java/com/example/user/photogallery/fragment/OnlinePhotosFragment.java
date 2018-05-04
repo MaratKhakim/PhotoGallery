@@ -1,6 +1,9 @@
 package com.example.user.photogallery.fragment;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,6 +16,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -34,36 +38,41 @@ public class OnlinePhotosFragment extends Fragment {
     private static final String API_KEY = "api_key";
     private static final String TAG = "OnlinePhotosFragment";
 
-    private RecyclerView mPhotoRecyclerView;
     private OnlineAdapter mAdapter;
-    private ArrayList<OnlinePhoto> mItems = new ArrayList<>();
     private ProgressDialog pDialog;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
-        pDialog = new ProgressDialog(getActivity());
-        mPhotoRecyclerView = view.findViewById(R.id.recycler_view);
-        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getActivity(), 2);
-        mPhotoRecyclerView.setLayoutManager(mLayoutManager);
-        mPhotoRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        mAdapter = new OnlineAdapter(getActivity(), mItems);
-        setupAdapter();
-        fetchImages();
+        TextView emptyStateTextView = (TextView) view.findViewById(R.id.empty_view);
+
+        ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        if (networkInfo != null && networkInfo.isConnected()){
+            pDialog = new ProgressDialog(getActivity());
+            RecyclerView photoRecyclerView = view.findViewById(R.id.recycler_view);
+            RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getActivity(), 2);
+            photoRecyclerView.setLayoutManager(mLayoutManager);
+            photoRecyclerView.setItemAnimator(new DefaultItemAnimator());
+
+            ArrayList<OnlinePhoto> items = fetchImages();
+            mAdapter = new OnlineAdapter(getActivity(), items);
+            photoRecyclerView.setAdapter(mAdapter);
+        } else {
+            emptyStateTextView.setText(R.string.no_internet_connection);
+            emptyStateTextView.setVisibility(View.VISIBLE);
+        }
 
         return view;
     }
 
-    private void setupAdapter() {
-        if (isAdded()) {
-            mPhotoRecyclerView.setAdapter(mAdapter);
-        }
-    }
+    private ArrayList<OnlinePhoto> fetchImages() {
 
-    private void fetchImages() {
+        final ArrayList<OnlinePhoto> mItems = new ArrayList<>();
 
-        pDialog.setMessage("Downloading json...");
+        pDialog.setMessage(getResources().getString(R.string.download_message));
         pDialog.show();
 
         String url = buildUrlGetRecent();
@@ -73,8 +82,6 @@ public class OnlinePhotosFragment extends Fragment {
             public void onResponse(JSONObject response) {
                 Log.d(TAG, response.toString());
                 pDialog.hide();
-
-                mItems.clear();
 
                 try {
                     JSONObject photosJsonObject = response.getJSONObject("photos");
@@ -110,6 +117,8 @@ public class OnlinePhotosFragment extends Fragment {
 
         // Adding request to request queue
         SingletonRequestQueue.getInstance().addToRequestQueue(req);
+
+        return mItems;
     }
 
     private String buildUrlGetRecent(){

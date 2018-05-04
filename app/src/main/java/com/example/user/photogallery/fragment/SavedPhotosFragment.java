@@ -8,7 +8,6 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,17 +39,15 @@ public class SavedPhotosFragment extends Fragment {
         RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getActivity(), 2);
         mPhotoRecyclerView.setLayoutManager(mLayoutManager);
         mPhotoRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        ArrayList<SavedPhoto> items = getSavedPhotos();
-        mAdapter = new SavedAdapter(getActivity(), items);
-        setupAdapter();
-        Log.d(TAG, "onCreateView");
+
         return view;
     }
 
-    private void setupAdapter() {
-        if (isAdded()) {
-            mPhotoRecyclerView.setAdapter(mAdapter);
-        }
+    @Override
+    public void onResume() {
+        super.onResume();
+        mAdapter = new SavedAdapter(getActivity(), getSavedPhotos());
+        mPhotoRecyclerView.setAdapter(mAdapter);
     }
 
     private ArrayList<SavedPhoto> getSavedPhotos(){
@@ -62,11 +59,8 @@ public class SavedPhotosFragment extends Fragment {
         if (folder.exists()){
             File[] files=folder.listFiles();
 
-            for (int i=0;i<files.length;i++)
-            {
-                File file=files[i];
-
-                photo=new SavedPhoto();
+            for (File file : files) {
+                photo = new SavedPhoto();
                 photo.setName(file.getName());
                 photo.setUri(Uri.fromFile(file));
 

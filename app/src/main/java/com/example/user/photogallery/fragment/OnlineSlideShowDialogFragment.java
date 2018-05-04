@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.user.photogallery.R;
+import com.example.user.photogallery.adapter.SavedAdapter;
 import com.example.user.photogallery.model.OnlinePhoto;
 
 import java.io.File;
@@ -133,7 +134,7 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
                 @Override
                 public void onClick(View v) {
                     String path = Environment.getExternalStorageDirectory().toString();
-                    OutputStream fOut = null;
+                    OutputStream outputStream;
                     File dir = new File(path + "/"+getResources().getString(R.string.folder_name)+"/");
                     if (!dir.exists())
                         dir.mkdir();
@@ -142,17 +143,17 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
 
                     File file = new File(dir, "photo_gallery_" + images.get(position).getId() + ".jpg");
                     try {
-                        fOut = new FileOutputStream(file);
+                        outputStream = new FileOutputStream(file);
                         Bitmap bitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 99, fOut);
-                        fOut.flush();
-                        fOut.close();
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 99, outputStream);
+                        outputStream.flush();
+                        outputStream.close();
 
                         //MediaStore.Images.Media.insertImage(getActivity().getContentResolver(), file.getAbsolutePath(), file.getName(), file.getName());
 
                         String saved = getResources().getString(R.string.saved);
                         Toast.makeText(getActivity(), saved + " " + file.toString(), Toast.LENGTH_LONG).show();
-                        Log.d(TAG, "Saved");
+
                     } catch (FileNotFoundException e) {
                         Log.e(TAG, "File not found " + e.getMessage());
                     } catch (IOException e) {
