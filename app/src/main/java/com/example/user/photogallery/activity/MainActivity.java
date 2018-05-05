@@ -29,14 +29,6 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
 
     private static final int REQUEST_CODE_EXTERNAL_STORAGE_PERMISSION = 100;
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
     @Override
@@ -51,7 +43,6 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
             return;
 
         setupUI();
-
     }
 
     private void setupUI() {
@@ -73,19 +64,14 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -130,10 +116,14 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
         @Override
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
-            if (position == 1)
-                return new SavedPhotosFragment();
-
-            return new OnlinePhotosFragment();
+            switch (position) {
+                case 0:
+                    return OnlinePhotosFragment.newInstance();
+                case 1:
+                    return SavedPhotosFragment.newInstance();
+                default:
+                    return null;
+            }
         }
 
         @NonNull
@@ -167,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
                                            int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
+        //if permissions are granted then show UI, otherwise require permissions
         if (requestCode == REQUEST_CODE_EXTERNAL_STORAGE_PERMISSION) {
             int grantResultsLength = grantResults.length;
             if (grantResultsLength > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -178,15 +169,17 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
     }
 
     private boolean isPermissionGranted() {
-        /*if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M)
-            return true;*/
 
-        // Check whether this app has write and read external storage permission or not.
+        //permissions for pre-Marshmallow versions are granted
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M)
+            return true;
+
+        //check whether this app has write and read external storage permission or not.
         int writeExternalStoragePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int readExternalStoragePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        // If do not grant write external storage permission.
+
         if (writeExternalStoragePermission != PackageManager.PERMISSION_GRANTED && readExternalStoragePermission != PackageManager.PERMISSION_GRANTED) {
-            // Request user to grant write external storage permission.
+            // request user to grant write and read external storage permission.
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_CODE_EXTERNAL_STORAGE_PERMISSION);
 
             return false;

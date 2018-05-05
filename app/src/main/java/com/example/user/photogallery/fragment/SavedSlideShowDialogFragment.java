@@ -7,7 +7,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,8 +25,7 @@ public class SavedSlideShowDialogFragment extends DialogFragment {
     private ArrayList<SavedPhoto> mImages;
 
     public static SavedSlideShowDialogFragment newInstance() {
-        SavedSlideShowDialogFragment fragment = new SavedSlideShowDialogFragment();
-        return fragment;
+        return new SavedSlideShowDialogFragment();
     }
 
     @Override
@@ -66,12 +64,10 @@ public class SavedSlideShowDialogFragment extends DialogFragment {
         @Override
         public Object instantiateItem(ViewGroup container, final int position) {
 
-            final int finalPosition = position;
-
             layoutInflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View view = layoutInflater.inflate(R.layout.photo_fullscreen, container, false);
+            View view = layoutInflater.inflate(R.layout.saved_photo_fullscreen, container, false);
 
-            final ImageView imageViewPreview = (ImageView) view.findViewById(R.id.image_preview);
+            final ImageView imageViewPreview = (ImageView) view.findViewById(R.id.saved_image_preview);
 
             SavedPhoto image = mImages.get(position);
 

@@ -6,9 +6,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -32,48 +34,67 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class OnlinePhotosFragment extends Fragment {
+public class OnlinePhotosFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
 
     //replace api_key with your key
     private static final String API_KEY = "api_key";
     private static final String TAG = "OnlinePhotosFragment";
 
+    private View mView;
     private OnlineAdapter mAdapter;
     private ProgressDialog pDialog;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+    private TextView mEmptyStateTextView;
+    private boolean isInitialLoad = false;
+    private ConnectivityManager mConnectivityManager;
+    private NetworkInfo mNetworkInfo;
+
+    public static OnlinePhotosFragment newInstance() {
+        return new OnlinePhotosFragment();
+    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
-        TextView emptyStateTextView = (TextView) view.findViewById(R.id.empty_view);
+        mView = inflater.inflate(R.layout.fragment_online_photos, container, false);
+        mEmptyStateTextView = (TextView) mView.findViewById(R.id.empty_view);
 
-        ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        mSwipeRefreshLayout = mView.findViewById(R.id.swipe_refresh);
+        mSwipeRefreshLayout.setOnRefreshListener(this);
 
-        if (networkInfo != null && networkInfo.isConnected()){
-            pDialog = new ProgressDialog(getActivity());
-            RecyclerView photoRecyclerView = view.findViewById(R.id.recycler_view);
-            RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getActivity(), 2);
-            photoRecyclerView.setLayoutManager(mLayoutManager);
-            photoRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        mConnectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
 
-            ArrayList<OnlinePhoto> items = fetchImages();
-            mAdapter = new OnlineAdapter(getActivity(), items);
-            photoRecyclerView.setAdapter(mAdapter);
+        if (mNetworkInfo != null && mNetworkInfo.isConnected()) {
+            setupUI();
         } else {
-            emptyStateTextView.setText(R.string.no_internet_connection);
-            emptyStateTextView.setVisibility(View.VISIBLE);
+            mEmptyStateTextView.setVisibility(View.VISIBLE);
         }
 
-        return view;
+        return mView;
+    }
+
+    private void setupUI() {
+        pDialog = new ProgressDialog(getActivity());
+        RecyclerView photoRecyclerView = mView.findViewById(R.id.recycler_view);
+        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getActivity(), 2);
+        photoRecyclerView.setLayoutManager(mLayoutManager);
+        photoRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        ArrayList<OnlinePhoto> photos = fetchImages();
+        mAdapter = new OnlineAdapter(getActivity(), photos);
+        photoRecyclerView.setAdapter(mAdapter);
     }
 
     private ArrayList<OnlinePhoto> fetchImages() {
 
-        final ArrayList<OnlinePhoto> mItems = new ArrayList<>();
+        final ArrayList<OnlinePhoto> photos = new ArrayList<>();
 
         pDialog.setMessage(getResources().getString(R.string.download_message));
-        pDialog.show();
+
+        if (!isInitialLoad) {
+            pDialog.show();
+            isInitialLoad = true;
+        }
 
         String url = buildUrlGetRecent();
 
@@ -81,25 +102,28 @@ public class OnlinePhotosFragment extends Fragment {
             @Override
             public void onResponse(JSONObject response) {
                 Log.d(TAG, response.toString());
-                pDialog.hide();
+                if (pDialog.isShowing())
+                    pDialog.hide();
+
+                if (mSwipeRefreshLayout.isRefreshing())
+                    mSwipeRefreshLayout.setRefreshing(false);
 
                 try {
                     JSONObject photosJsonObject = response.getJSONObject("photos");
                     JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
 
-                    for (int i = 0; i < photoJsonArray.length(); i++){
+                    for (int i = 0; i < photoJsonArray.length(); i++) {
                         JSONObject photoJsonObject = photoJsonArray.getJSONObject(i);
 
                         OnlinePhoto item = new OnlinePhoto();
                         item.setId(photoJsonObject.getString("id"));
-                        item.setTitle(photoJsonObject.getString("title"));
 
-                        if (!photoJsonObject.has("url_s")){
+                        if (!photoJsonObject.has("url_s")) {
                             continue;
                         }
 
                         item.setUrl(photoJsonObject.getString("url_s"));
-                        mItems.add(item);
+                        photos.add(item);
                     }
                 } catch (JSONException e) {
                     Log.e(TAG, "Json parsing error: " + e.getMessage());
@@ -118,10 +142,10 @@ public class OnlinePhotosFragment extends Fragment {
         // Adding request to request queue
         SingletonRequestQueue.getInstance().addToRequestQueue(req);
 
-        return mItems;
+        return photos;
     }
 
-    private String buildUrlGetRecent(){
+    private String buildUrlGetRecent() {
         return Uri.parse("https://api.flickr.com/services/rest").buildUpon()
                 .appendQueryParameter("method", "flickr.photos.getRecent")
                 .appendQueryParameter("api_key", API_KEY)
@@ -129,5 +153,33 @@ public class OnlinePhotosFragment extends Fragment {
                 .appendQueryParameter("nojsoncallback", "1")
                 .appendQueryParameter("extras", "url_s")
                 .build().toString();
+    }
+
+    @Override
+    public void onRefresh() {
+        mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+
+        if (mNetworkInfo != null && mNetworkInfo.isConnected()) {
+            if (mEmptyStateTextView.isShown())
+                mEmptyStateTextView.setVisibility(View.GONE);
+
+            setupUI();
+        }
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mSwipeRefreshLayout.setRefreshing(false);
+
+            }
+        }, 4000);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (pDialog != null)
+            pDialog.dismiss();
     }
 }

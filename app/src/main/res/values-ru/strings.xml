@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ФотоГалерея</string>
+    <string name="tab_text_1">Онлайн</string>
+    <string name="tab_text_2">Сохраненные</string>
+    <string name="action_settings">Настройки</string>
+    <string name="saved">Сохранено в</string>
+    <string name="share_begin">Хочу поделиться</string>
+    <string name="label_count">%d из %d</string>
+    <string name="permission_requirement">Необходимо предоставить разрешения</string>
+    <string name="no_internet_connection">Нет подключения к интернету</string>
+    <string name="download_message">Загрузка…</string>
+    <string name="no_saved_photos">Нет сохраненных фотографий</string>
+    <string name="save">Сохранить</string>
+    <string name="folder_name">PhotoGalleryApp</string>
+</resources>

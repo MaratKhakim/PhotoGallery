@@ -22,8 +22,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.user.photogallery.R;
-import com.example.user.photogallery.adapter.SavedAdapter;
+import com.example.user.photogallery.adapter.OnlineAdapter;
 import com.example.user.photogallery.model.OnlinePhoto;
 
 import java.io.File;
@@ -37,11 +38,10 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
 
     private static final String TAG = "OnlineSlideShow";
 
-    private ArrayList<OnlinePhoto> images;
+    private ArrayList<OnlinePhoto> mImages;
 
     public static OnlineSlideShowDialogFragment newInstance() {
-        OnlineSlideShowDialogFragment fragment = new OnlineSlideShowDialogFragment();
-        return fragment;
+        return new OnlineSlideShowDialogFragment();
     }
 
     @Override
@@ -59,8 +59,8 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
 
         Bundle bundle = getArguments();
 
-        images = (ArrayList<OnlinePhoto>) bundle.getSerializable("images");
-        int selectedPosition = bundle.getInt("position", 0);
+        mImages = (ArrayList<OnlinePhoto>) bundle.getSerializable(OnlineAdapter.IMAGES);
+        int selectedPosition = bundle.getInt(OnlineAdapter.POSITION, 0);
 
         MyViewPagerAdapter myViewPagerAdapter = new MyViewPagerAdapter();
         viewPager.setAdapter(myViewPagerAdapter);
@@ -84,7 +84,7 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
             final int finalPosition = position;
 
             layoutInflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View view = layoutInflater.inflate(R.layout.photo_fullscreen, container, false);
+            View view = layoutInflater.inflate(R.layout.online_photo_fullscreen, container, false);
 
             final ImageView imageViewPreview = (ImageView) view.findViewById(R.id.image_preview);
 
@@ -103,14 +103,11 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
                 }
             });
 
-            OnlinePhoto image = images.get(position);
-
-            /*RequestOptions requestOptions = new RequestOptions();
-            requestOptions.diskCacheStrategy(DiskCacheStrategy.ALL);*/
+            OnlinePhoto image = mImages.get(position);
 
             Glide.with(OnlineSlideShowDialogFragment.this).load(image.getUrl())
                     .thumbnail(0.5f)
-                    //.apply(requestOptions)
+                    .apply(new RequestOptions().placeholder(R.drawable.placeholder))
                     .into(imageViewPreview);
 
             btnShare.setOnClickListener(new View.OnClickListener() {
@@ -122,12 +119,12 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
                     Intent shareIntent = new Intent();
                     shareIntent.setType("text/plain");
                     shareIntent.setAction(Intent.ACTION_SEND);
-                    shareIntent.putExtra(Intent.EXTRA_TEXT, appvalue + " " + applicationName + ": " + images.get(finalPosition).getUrl());
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, appvalue + " " + applicationName + ": " + mImages.get(finalPosition).getUrl());
                     OnlineSlideShowDialogFragment.this.startActivity(Intent.createChooser(shareIntent, "Share"));
                 }
             });
 
-            String labelText = String.format(getResources().getString(R.string.label_count), position+1, images.size());
+            String labelText = String.format(getResources().getString(R.string.label_count), position+1, mImages.size());
             labelCount.setText(labelText);
 
             btnSave.setOnClickListener(new View.OnClickListener() {
@@ -141,7 +138,7 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
 
                     Log.e(TAG, dir.toString());
 
-                    File file = new File(dir, "photo_gallery_" + images.get(position).getId() + ".jpg");
+                    File file = new File(dir, "photo_gallery_" + mImages.get(position).getId() + ".jpg");
                     try {
                         outputStream = new FileOutputStream(file);
                         Bitmap bitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
@@ -169,7 +166,7 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
 
         @Override
         public int getCount() {
-            return images.size();
+            return mImages.size();
         }
 
         @Override
