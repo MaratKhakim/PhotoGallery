@@ -6,6 +6,7 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.widget.RelativeLayout;
 
+// a layout for a photo
 class SquareLayout extends RelativeLayout {
 
     public SquareLayout(Context context) {
@@ -27,7 +28,7 @@ class SquareLayout extends RelativeLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // Set a square layout.
+        // set a square layout.
         super.onMeasure(widthMeasureSpec, widthMeasureSpec);
     }
 }

@@ -1,7 +1,6 @@
 package com.example.user.photogallery.fragment;
 
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
@@ -15,20 +14,14 @@ import android.widget.TextView;
 
 import com.example.user.photogallery.R;
 import com.example.user.photogallery.adapter.SavedAdapter;
-import com.example.user.photogallery.model.SavedPhoto;
+import com.example.user.photogallery.model.Photo;
 
 import java.io.File;
 import java.util.ArrayList;
 
-/**
- * A simple {@link Fragment} subclass.
- */
 public class SavedPhotosFragment extends Fragment {
 
-    private static final String TAG = "SavedPhotosFragment";
-
     private RecyclerView mPhotoRecyclerView;
-    private SavedAdapter mAdapter;
     private TextView mTextView;
 
     public static SavedPhotosFragment newInstance(){
@@ -54,32 +47,34 @@ public class SavedPhotosFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        ArrayList<SavedPhoto> savedPhotos = getSavedPhotos();
+        ArrayList<Photo> savedPhotos = getSavedPhotos();
 
+        // if there is no saved photos then show a message
         if (savedPhotos.size() < 1){
             mTextView.setVisibility(View.VISIBLE);
         } else {
+            //otherwise display all saved photos
             if (mTextView.isShown())
                 mTextView.setVisibility(View.GONE);
 
-            mAdapter = new SavedAdapter(getActivity(), savedPhotos);
-            mPhotoRecyclerView.setAdapter(mAdapter);
+            SavedAdapter adapter = new SavedAdapter(getActivity(), savedPhotos);
+            mPhotoRecyclerView.setAdapter(adapter);
         }
     }
 
-    private ArrayList<SavedPhoto> getSavedPhotos(){
-        ArrayList<SavedPhoto> savedPhotos = new ArrayList<>();
+    // get all saved photos from the PhotoGallery folder
+    private ArrayList<Photo> getSavedPhotos(){
+        ArrayList<Photo> savedPhotos = new ArrayList<>();
 
         File folder= new File(Environment.getExternalStorageDirectory(), getResources().getString(R.string.folder_name));
-        SavedPhoto photo;
 
         if (folder.exists()){
             File[] files=folder.listFiles();
 
             for (File file : files) {
-                photo = new SavedPhoto();
-                photo.setName(file.getName());
-                photo.setUri(Uri.fromFile(file));
+                Photo photo = new Photo();
+                photo.setId(file.getName());
+                photo.setLink(file.getAbsolutePath());
 
                 savedPhotos.add(photo);
             }

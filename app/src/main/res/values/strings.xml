@@ -7,7 +7,7 @@
     <string name="save">Save</string>
     <string name="saved">Saved to</string>
     <string name="share_begin">Want to share</string>
-    <string name="folder_name">PhotoGalleryApp</string>
+    <string name="folder_name">PhotoGallery</string>
     <string name="label_count">%d of %d</string>
     <string name="permission_requirement">Permission is required</string>
     <string name="no_internet_connection">No internet connection.</string>

@@ -1,6 +1,5 @@
 package com.example.user.photogallery.fragment;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -18,6 +17,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.android.volley.Response;
@@ -26,7 +26,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.example.user.photogallery.R;
 import com.example.user.photogallery.adapter.OnlineAdapter;
 import com.example.user.photogallery.helper.SingletonRequestQueue;
-import com.example.user.photogallery.model.OnlinePhoto;
+import com.example.user.photogallery.model.Photo;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,7 +42,7 @@ public class OnlinePhotosFragment extends Fragment implements SwipeRefreshLayout
 
     private View mView;
     private OnlineAdapter mAdapter;
-    private ProgressDialog pDialog;
+    private RelativeLayout pDialog;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private TextView mEmptyStateTextView;
     private boolean isInitialLoad = false;
@@ -51,6 +51,14 @@ public class OnlinePhotosFragment extends Fragment implements SwipeRefreshLayout
 
     public static OnlinePhotosFragment newInstance() {
         return new OnlinePhotosFragment();
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        mConnectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
     }
 
     @Nullable
@@ -62,9 +70,7 @@ public class OnlinePhotosFragment extends Fragment implements SwipeRefreshLayout
         mSwipeRefreshLayout = mView.findViewById(R.id.swipe_refresh);
         mSwipeRefreshLayout.setOnRefreshListener(this);
 
-        mConnectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
-
+        // check internet connection. If no connection then show a message
         if (mNetworkInfo != null && mNetworkInfo.isConnected()) {
             setupUI();
         } else {
@@ -75,24 +81,23 @@ public class OnlinePhotosFragment extends Fragment implements SwipeRefreshLayout
     }
 
     private void setupUI() {
-        pDialog = new ProgressDialog(getActivity());
+        pDialog = mView.findViewById(R.id.relative_layout_progressBar);
         RecyclerView photoRecyclerView = mView.findViewById(R.id.recycler_view);
         RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getActivity(), 2);
         photoRecyclerView.setLayoutManager(mLayoutManager);
         photoRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        ArrayList<OnlinePhoto> photos = fetchImages();
+
+        ArrayList<Photo> photos = fetchPhotos();
         mAdapter = new OnlineAdapter(getActivity(), photos);
         photoRecyclerView.setAdapter(mAdapter);
     }
 
-    private ArrayList<OnlinePhoto> fetchImages() {
-
-        final ArrayList<OnlinePhoto> photos = new ArrayList<>();
-
-        pDialog.setMessage(getResources().getString(R.string.download_message));
+    // fetch photos from the Internet
+    private ArrayList<Photo> fetchPhotos() {
+        final ArrayList<Photo> photos = new ArrayList<>();
 
         if (!isInitialLoad) {
-            pDialog.show();
+            pDialog.setVisibility(View.VISIBLE);
             isInitialLoad = true;
         }
 
@@ -102,8 +107,7 @@ public class OnlinePhotosFragment extends Fragment implements SwipeRefreshLayout
             @Override
             public void onResponse(JSONObject response) {
                 Log.d(TAG, response.toString());
-                if (pDialog.isShowing())
-                    pDialog.hide();
+                pDialog.setVisibility(View.GONE);
 
                 if (mSwipeRefreshLayout.isRefreshing())
                     mSwipeRefreshLayout.setRefreshing(false);
@@ -115,14 +119,15 @@ public class OnlinePhotosFragment extends Fragment implements SwipeRefreshLayout
                     for (int i = 0; i < photoJsonArray.length(); i++) {
                         JSONObject photoJsonObject = photoJsonArray.getJSONObject(i);
 
-                        OnlinePhoto item = new OnlinePhoto();
+                        Photo item = new Photo();
                         item.setId(photoJsonObject.getString("id"));
 
+                        // if there are photos without url, just skip them
                         if (!photoJsonObject.has("url_s")) {
                             continue;
                         }
 
-                        item.setUrl(photoJsonObject.getString("url_s"));
+                        item.setLink(photoJsonObject.getString("url_s"));
                         photos.add(item);
                     }
                 } catch (JSONException e) {
@@ -135,16 +140,17 @@ public class OnlinePhotosFragment extends Fragment implements SwipeRefreshLayout
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.e(TAG, "Error: " + error.getMessage());
-                pDialog.hide();
+                pDialog.setVisibility(View.GONE);
             }
         });
 
-        // Adding request to request queue
+        // adding request to request queue
         SingletonRequestQueue.getInstance().addToRequestQueue(req);
 
         return photos;
     }
 
+    // build url to get recent photos from www.flickr.com
     private String buildUrlGetRecent() {
         return Uri.parse("https://api.flickr.com/services/rest").buildUpon()
                 .appendQueryParameter("method", "flickr.photos.getRecent")
@@ -155,6 +161,7 @@ public class OnlinePhotosFragment extends Fragment implements SwipeRefreshLayout
                 .build().toString();
     }
 
+    // refresh a list of the photos
     @Override
     public void onRefresh() {
         mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
@@ -166,20 +173,13 @@ public class OnlinePhotosFragment extends Fragment implements SwipeRefreshLayout
             setupUI();
         }
 
+        // if no internet connection, dismiss the swipe-to-refresh
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
                 mSwipeRefreshLayout.setRefreshing(false);
 
             }
-        }, 4000);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        if (pDialog != null)
-            pDialog.dismiss();
+        }, 3000);
     }
 }

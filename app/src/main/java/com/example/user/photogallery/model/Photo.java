@@ -2,9 +2,10 @@ package com.example.user.photogallery.model;
 
 import java.io.Serializable;
 
-public class OnlinePhoto implements Serializable {
+public class Photo implements Serializable{
+
     private String mId;
-    private String mUrl;
+    private String mLink;
 
     public String getId() {
         return mId;
@@ -14,11 +15,11 @@ public class OnlinePhoto implements Serializable {
         this.mId = mId;
     }
 
-    public String getUrl() {
-        return mUrl;
+    public String getLink() {
+        return mLink;
     }
 
-    public void setUrl(String mUrl) {
-        this.mUrl = mUrl;
+    public void setLink(String mUrl) {
+        this.mLink = mUrl;
     }
 }

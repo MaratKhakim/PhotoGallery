@@ -13,8 +13,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
@@ -63,23 +62,6 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
     }
@@ -87,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
     @Override
     public void onPageSelected(int position) {
 
+        //if the current fragment is SavedPhotosFragment, refresh it
         Fragment fragment = mSectionsPagerAdapter.getFragment(position);
         if (position == 1 && fragment != null) {
             fragment.onResume();
@@ -133,6 +116,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
             if (obj instanceof Fragment) {
                 Fragment fragment = (Fragment) obj;
                 String tag = fragment.getTag();
+                Log.e("main", tag);
                 mFragmentTags.put(position, tag);
             }
 
@@ -157,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
                                            int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        //if permissions are granted then show UI, otherwise require permissions
+        //if permissions are granted then show UI, otherwise require the permissions
         if (requestCode == REQUEST_CODE_EXTERNAL_STORAGE_PERMISSION) {
             int grantResultsLength = grantResults.length;
             if (grantResultsLength > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

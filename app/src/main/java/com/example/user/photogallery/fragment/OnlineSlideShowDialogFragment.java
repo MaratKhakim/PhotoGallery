@@ -4,13 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Bundle;
 import android.os.Environment;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,58 +19,32 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.user.photogallery.R;
-import com.example.user.photogallery.adapter.OnlineAdapter;
-import com.example.user.photogallery.model.OnlinePhoto;
+import com.example.user.photogallery.model.Photo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
 
-public class OnlineSlideShowDialogFragment extends DialogFragment {
+public class OnlineSlideShowDialogFragment extends SlideShowDialogFragment {
 
     private static final String TAG = "OnlineSlideShow";
-
-    private ArrayList<OnlinePhoto> mImages;
 
     public static OnlineSlideShowDialogFragment newInstance() {
         return new OnlineSlideShowDialogFragment();
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+    protected PagerAdapter createPagerAdapter() {
+        return new ViewPagerAdapter();
     }
 
-    @NonNull
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_slide_show, container, false);
-
-        ViewPager viewPager = (ViewPager) view.findViewById(R.id.viewpager);
-
-        Bundle bundle = getArguments();
-
-        mImages = (ArrayList<OnlinePhoto>) bundle.getSerializable(OnlineAdapter.IMAGES);
-        int selectedPosition = bundle.getInt(OnlineAdapter.POSITION, 0);
-
-        MyViewPagerAdapter myViewPagerAdapter = new MyViewPagerAdapter();
-        viewPager.setAdapter(myViewPagerAdapter);
-
-        viewPager.setCurrentItem(selectedPosition, false);
-
-        return view;
-    }
-
-    //  adapter
-    public class MyViewPagerAdapter extends PagerAdapter {
+    public class ViewPagerAdapter extends PagerAdapter {
 
         private LayoutInflater layoutInflater;
 
-        public MyViewPagerAdapter() {
+        public ViewPagerAdapter() {
         }
 
         @Override
@@ -103,13 +72,14 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
                 }
             });
 
-            OnlinePhoto image = mImages.get(position);
+            Photo image = mImages.get(position);
 
-            Glide.with(OnlineSlideShowDialogFragment.this).load(image.getUrl())
+            Glide.with(OnlineSlideShowDialogFragment.this).load(image.getLink())
                     .thumbnail(0.5f)
                     .apply(new RequestOptions().placeholder(R.drawable.placeholder))
                     .into(imageViewPreview);
 
+            // share a photo
             btnShare.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -119,25 +89,30 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
                     Intent shareIntent = new Intent();
                     shareIntent.setType("text/plain");
                     shareIntent.setAction(Intent.ACTION_SEND);
-                    shareIntent.putExtra(Intent.EXTRA_TEXT, appvalue + " " + applicationName + ": " + mImages.get(finalPosition).getUrl());
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, appvalue + " " + applicationName + ": " + mImages.get(finalPosition).getLink());
                     OnlineSlideShowDialogFragment.this.startActivity(Intent.createChooser(shareIntent, "Share"));
                 }
             });
 
+            // text to show a postion of the current photo
             String labelText = String.format(getResources().getString(R.string.label_count), position+1, mImages.size());
             labelCount.setText(labelText);
 
+            // save a photo to the external storage
             btnSave.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     String path = Environment.getExternalStorageDirectory().toString();
                     OutputStream outputStream;
+
+                    // create a folder to save photos
                     File dir = new File(path + "/"+getResources().getString(R.string.folder_name)+"/");
                     if (!dir.exists())
                         dir.mkdir();
 
-                    Log.e(TAG, dir.toString());
+                    Log.d(TAG, dir.toString());
 
+                    // give a name to the photo
                     File file = new File(dir, "photo_gallery_" + mImages.get(position).getId() + ".jpg");
                     try {
                         outputStream = new FileOutputStream(file);
@@ -145,8 +120,6 @@ public class OnlineSlideShowDialogFragment extends DialogFragment {
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 99, outputStream);
                         outputStream.flush();
                         outputStream.close();
-
-                        //MediaStore.Images.Media.insertImage(getActivity().getContentResolver(), file.getAbsolutePath(), file.getName(), file.getName());
 
                         String saved = getResources().getString(R.string.saved);
                         Toast.makeText(getActivity(), saved + " " + file.toString(), Toast.LENGTH_LONG).show();
