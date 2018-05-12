@@ -1,4 +1,4 @@
-# Test task for Yandex Mobile Schoool
+# Test task for Yandex Mobile School
 
 Implementation of [the test task](https://academy.yandex.ru/events/mobdev/msk-2018/) for Yandex Mobile School
 
